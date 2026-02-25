@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Admin – {{ project.name }}{% endblock %}
+{% block content %}
+<h4 class="grey-text text-darken-3">Project admin – {{ project.name }}</h4>
+<p class="grey-text">Read-only view of Timing Elements, Variables, Message Templates, Nodes and Keywords.</p>
+
+<ul id="admin-tabs" class="tabs">
+    <li class="tab col s2"><a href="#tab-timings" class="active">Timing</a></li>
+    <li class="tab col s2"><a href="#tab-variables">Variables</a></li>
+    <li class="tab col s3"><a href="#tab-templates">Message Templates</a></li>
+    <li class="tab col s2"><a href="#tab-nodes">Nodes</a></li>
+    <li class="tab col s3"><a href="#tab-keywords">Keywords</a></li>
+</ul>
+
+<div id="tab-timings" class="card">
+    <div class="card-content">
+        <span class="card-title">Timing Elements</span>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Direction</th>
+                    <th>Days</th>
+                    <th>Hours</th>
+                    <th>Minutes</th>
+                    <th>Seconds</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in timings %}
+                <tr>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.direction }}</td>
+                    <td>{{ t.days }}</td>
+                    <td>{{ t.hours }}</td>
+                    <td>{{ t.minutes }}</td>
+                    <td>{{ t.seconds }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="grey-text">No timing elements.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-variables" class="card">
+    <div class="card-content">
+        <span class="card-title">Variables</span>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Source</th>
+                    <th>System</th>
+                    <th>AGV</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in variables %}
+                <tr>
+                    <td>{{ v.name }}</td>
+                    <td>{{ v.type }}</td>
+                    <td>{{ v.source }}</td>
+                    <td>{{ 'Yes' if v.is_system else 'No' }}</td>
+                    <td>{{ 'Yes' if v.is_agv else 'No' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="grey-text">No variables.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-templates" class="card">
+    <div class="card-content">
+        <span class="card-title">Message Templates</span>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Variable</th>
+                    <th>Text (EN)</th>
+                    <th>Text (ES)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tpl in templates %}
+                <tr>
+                    <td>{{ tpl.name }}</td>
+                    <td>{{ tpl.type }}</td>
+                    <td>{{ tpl.variable_id or '' }}</td>
+                    <td>{{ tpl.text_en|truncate(80) }}</td>
+                    <td>{{ tpl.text_es|truncate(80) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="grey-text">No message templates.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-nodes" class="card">
+    <div class="card-content">
+        <span class="card-title">Nodes</span>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Terminal</th>
+                    <th>Message Template</th>
+                    <th>Timing</th>
+                    <th>Activation Type</th>
+                    <th>Source Node / Poll / DateVar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for n in nodes %}
+                <tr>
+                    <td>{{ n.name }}</td>
+                    <td>{{ 'Yes' if n.is_terminal else 'No' }}</td>
+                    <td>{{ n.message_template_id }}</td>
+                    <td>{{ n.schedule_timing_id }}</td>
+                    <td>{{ n.activation_type }}</td>
+                    <td>{{ n.activation_source_node_id or n.activation_poll_id or n.activation_datetime_var_id or '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="grey-text">No nodes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h6 class="grey-text text-darken-2" style="margin-top: 24px;">Node connections</h6>
+        <p class="grey-text" style="font-size: 0.85rem;">
+            Simple visualization of how nodes connect to each other (source → target), including activation type,
+            timing element and conditions. This approximates the flow diagrams in the document.
+        </p>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To (Node)</th>
+                    <th>Activation</th>
+                    <th>Timing</th>
+                    <th>Condition</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in edges %}
+                <tr>
+                    <td>{{ e.from }}</td>
+                    <td>{{ e.to }}</td>
+                    <td>{{ e.activation }}</td>
+                    <td>{{ e.timing or 'Instantly' }}</td>
+                    <td>{{ e.condition }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="grey-text">No connections.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="node-graph" style="height: 520px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 16px;"></div>
+    </div>
+</div>
+
+<div id="tab-keywords" class="card">
+    <div class="card-content">
+        <span class="card-title">Keywords</span>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Keyword</th>
+                    <th>Language</th>
+                    <th>Action Type</th>
+                    <th>Referenced Node</th>
+                    <th>Referenced Variable</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k in keywords %}
+                <tr>
+                    <td>{{ k.name }}</td>
+                    <td>{{ k.keyword_text }}</td>
+                    <td>{{ k.language }}</td>
+                    <td>{{ k.action_type }}</td>
+                    <td>{{ k.referenced_node_id or '' }}</td>
+                    <td>{{ k.referenced_variable_id or '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="grey-text">No keywords.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/cytoscape@3.27.0/dist/cytoscape.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('admin-tabs');
+    if (M && M.Tabs && el) {
+        M.Tabs.init(el);
+    }
+
+    const container = document.getElementById('node-graph');
+    if (container && window.cytoscape) {
+        const elements = {{ graph_elements | tojson }};
+        const nodeTemplates = {{ node_templates | tojson }};
+        const cy = cytoscape({
+            container: container,
+            elements: elements,
+            layout: {
+                name: 'breadthfirst',
+                directed: true,
+                padding: 40,
+                spacingFactor: 1.8
+            },
+            style: [
+                {
+                    selector: 'node[kind = \"node\"], node[kind = \"start\"]',
+                    style: {
+                        'shape': 'ellipse',
+                        'background-color': '#1976d2',
+                        'label': 'data(label)',
+                        'color': '#ffffff',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'font-size': '9px',
+                        'width': 'label',
+                        'height': 'label',
+                        'padding': '10px'
+                    }
+                },
+                {
+                    selector: 'edge[kind = \"flowEdge\"]',
+                    style: {
+                        'width': 2,
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'triangle',
+                        'line-color': '#90caf9',
+                        'target-arrow-color': '#90caf9',
+                        'label': 'data(label)',
+                        'font-size': '8px',
+                        'text-background-color': '#ffffff',
+                        'text-background-opacity': 0.7,
+                        'text-background-padding': 2
+                    }
+                }
+            ]
+        });
+
+        // Show message template info when clicking a node
+        cy.on('tap', 'node', function(evt) {
+            const n = evt.target;
+            const label = n.data('label');
+            const info = nodeTemplates[label];
+            if (!info) {
+                M.toast({ html: 'No message template for this node', classes: 'grey' });
+                return;
+            }
+            const html =
+                '<span class=\"card-title\">' + label + '</span>' +
+                '<p><strong>Template:</strong> ' + info.template_name + ' (' + info.type + ')</p>' +
+                '<p style=\"white-space: pre-wrap;\"><strong>EN:</strong> ' + (info.text_en || '') + '</p>' +
+                '<p style=\"white-space: pre-wrap;\"><strong>ES:</strong> ' + (info.text_es || '') + '</p>';
+            const container = document.createElement('div');
+            container.className = 'card blue-grey lighten-5';
+            container.style.marginTop = '8px';
+            container.innerHTML = '<div class=\"card-content\">' + html + '</div>';
+
+            // Insert or replace details card below graph
+            let existing = document.getElementById('node-details-card');
+            if (!existing) {
+                existing = container;
+                existing.id = 'node-details-card';
+                const graphParent = document.getElementById('node-graph').parentNode;
+                graphParent.appendChild(existing);
+            } else {
+                existing.innerHTML = container.innerHTML;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Projects – DashMessaging{% endblock %}
+{% block content %}
+<h4 class="grey-text text-darken-3">Projects</h4>
+<p class="grey-text">Select a project to run a demo flow (send/receive messages).</p>
+<div class="row">
+    {% for p in projects %}
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">{{ p.name }}</span>
+                <p class="grey-text">{{ p.description or 'No description' }}</p>
+                <p><span class="badge {{ 'green' if p.status == 'Active' else 'grey' }}">{{ p.status }}</span></p>
+            </div>
+            <div class="card-action">
+                <a href="/demo?project_id={{ p.id }}" class="waves-effect waves-light btn primary">Open demo</a>
+                <a href="/admin/projects/{{ p.id }}" class="waves-effect btn-flat grey-text text-darken-1">Admin</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% if not projects %}
+<p class="grey-text">No projects yet. Start the server; the Prototype project is created on first run.</p>
+{% endif %}
+{% endblock %}

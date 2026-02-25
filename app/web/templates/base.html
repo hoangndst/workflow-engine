@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DashMessaging{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;       /* blue */
+            --primary-dark: #0d47a1;  /* darker blue */
+            --secondary: #ff9800;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .brand-logo { font-weight: 700; }
+        .card { border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .btn, .btn-large { border-radius: 4px; font-weight: 500; }
+        main.container { flex: 1 0 auto; }
+        .page-footer { padding-top: 0; flex-shrink: 0; }
+
+        /* Override Materialize default colors to use our blue palette */
+        .primary { background-color: var(--primary) !important; color: #ffffff !important; }
+        .primary.darken-2 { background-color: var(--primary-dark) !important; color: #ffffff !important; }
+        .btn.primary, .btn-large.primary { background-color: var(--primary) !important; }
+        .btn.primary:hover, .btn-large.primary:hover { background-color: var(--primary-dark) !important; }
+        nav.primary .brand-logo,
+        nav.primary a { color: #ffffff !important; }
+
+        /* Tabs (admin & others) */
+        .tabs .tab a { color: var(--primary-dark); }
+        .tabs .tab a:hover { color: var(--primary); }
+        .tabs .tab a.active { color: var(--primary-dark); }
+        .tabs .indicator { background-color: var(--primary); }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% block nav %}
+    <nav class="nav-extended primary">
+        <div class="nav-wrapper">
+            <a href="/" class="brand-logo">DashMessaging</a>
+            <ul class="right">
+                <li><a href="/">Projects</a></li>
+            </ul>
+        </div>
+    </nav>
+    {% endblock %}
+    <main class="container" style="padding-top: 24px; padding-bottom: 48px;">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="page-footer primary darken-2" style="margin-top: 48px;">
+        <div class="footer-copyright">
+            <div class="container">© DashMessaging Protocol Demo</div>
+        </div>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
