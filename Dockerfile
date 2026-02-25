@@ -1,65 +1,44 @@
-## Build stage: use uv to create the virtual environment
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS uv
+# Build stage: install dependencies
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Enable bytecode compilation for faster startup
-ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
-
-# Install the project's dependencies using the lockfile and settings.
-# Expecting uv.lock + pyproject.toml to be present in the build context.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev --no-editable
-
-# Then, add the rest of the project source code and install it.
-# Installing separately from its dependencies allows optimal layer caching.
-COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable
-
-
-## Final stage: slim Python image for runtime
-FROM python:3.13-slim-bookworm
-
-WORKDIR /app
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app \
-    PATH="/app/.venv/bin:$PATH" \
-    DATABASE_URL=sqlite:///./dashmessaging.db
-
-# System deps (if needed later, e.g. for Postgres client)
+# Install build deps and create venv
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy virtual environment from uv stage
-COPY --from=uv --chown=root:root /app/.venv /app/.venv
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-RUN chmod -R 755 /app/.venv/bin
-# Copy project files
-COPY --chown=root:root . /app
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir .
 
-# Copy entrypoint
-COPY entrypoint.sh /entrypoint.sh
+# Runtime stage
+FROM python:3.11-slim
 
-RUN chmod +x /entrypoint.sh
+WORKDIR /app
 
-# Create a non-root user for security
-RUN useradd -m -u 1000 botuser && \
-    chown -R botuser:botuser /app
+# Runtime deps only (e.g. libpq for asyncpg/psycopg2)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 appuser
 
-# Switch to non-root user
-USER botuser
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Expose FastAPI port
+COPY --chown=appuser:appuser app ./app
+COPY --chown=appuser:appuser alembic ./alembic
+COPY --chown=appuser:appuser alembic.ini ./
+COPY --chown=appuser:appuser entrypoint.sh ./
+
+RUN chmod +x entrypoint.sh
+
+USER appuser
+
 EXPOSE 8000
 
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
