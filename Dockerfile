@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy virtual environment from uv stage
 COPY --from=uv --chown=root:root /app/.venv /app/.venv
 
+RUN chmod -R 755 /app/.venv/bin
 # Copy project files
 COPY --chown=root:root . /app
 
