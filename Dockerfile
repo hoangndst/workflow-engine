@@ -46,6 +46,11 @@ COPY --from=uv --chown=root:root /app/.venv /app/.venv
 # Copy project files
 COPY --chown=root:root . /app
 
+# Copy entrypoint
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 # Create a non-root user for security
 RUN useradd -m -u 1000 botuser && \
     chown -R botuser:botuser /app
@@ -55,8 +60,5 @@ USER botuser
 
 # Expose FastAPI port
 EXPOSE 8000
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 CMD ["/entrypoint.sh"]
